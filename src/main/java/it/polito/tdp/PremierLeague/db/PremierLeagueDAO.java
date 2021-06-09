@@ -5,8 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.PremierLeague.model.Action;
+import it.polito.tdp.PremierLeague.model.Adiacenza;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
 import it.polito.tdp.PremierLeague.model.Team;
@@ -36,25 +40,27 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List<Team> listAllTeams(){
+	public void listAllTeams(Map<Integer,Team>idMap){
 		String sql = "SELECT * FROM Teams";
-		List<Team> result = new ArrayList<Team>();
+		//List<Team> result = new ArrayList<Team>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
+				if(!idMap.containsKey(res.getInt("TeamID"))){
 
 				Team team = new Team(res.getInt("TeamID"), res.getString("Name"));
-				result.add(team);
+				idMap.put(res.getInt("TeamID"), team);
+				}
 			}
 			conn.close();
-			return result;
+			//return result;
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null;
+			//return null;
 		}
 	}
 	
@@ -102,6 +108,52 @@ public class PremierLeagueDAO {
 				
 				result.add(match);
 
+			}
+			conn.close();
+			return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	// seleziono due squadre e mi prendo il risultato di ognuna quando è in casa
+	public List<Adiacenza> getAdiacenza(Map<Integer,Team>idMap){
+		String sql="SELECT m1.TeamHomeID AS casa1, m2.TeamHomeID AS casa2, m1.ResultOfTeamHome AS ris1, m2.ResultOfTeamHome AS ris2 "
+				+ "FROM matches m1, matches m2 "
+				+ "WHERE m1.TeamHomeID < m2.TeamHomeID "
+				+ "GROUP BY m1.TeamHomeID, m2.TeamHomeID "
+				+ " ";
+		
+		List<Adiacenza> result = new LinkedList<Adiacenza>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				double risultato= res.getInt("risultato");
+				double peso=0.0;
+				Team t1= idMap.get(res.getInt("squadra1"));
+				Team t2= idMap.get(res.getInt("squadra2"));
+				if(t1!=null && t2!=null) {
+				if(risultato==1) {
+				peso=3;
+				} else if(risultato==-1) {
+					peso=0;
+				} else if(risultato==0) {
+					peso=1;
+				}
+				
+				Adiacenza a= new Adiacenza(t1, t2, peso);
+				
+				result.add(a);
+
+			} else {
+				System.out.println("errore in getAdiacenze");
+				}
 			}
 			conn.close();
 			return result;
