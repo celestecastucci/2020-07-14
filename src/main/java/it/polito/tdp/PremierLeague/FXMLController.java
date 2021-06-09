@@ -5,10 +5,12 @@
 package it.polito.tdp.PremierLeague;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.PremierLeague.model.Model;
 import it.polito.tdp.PremierLeague.model.Team;
+import it.polito.tdp.PremierLeague.model.TeamClassifica;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -57,6 +59,20 @@ public class FXMLController {
     	}
 
     	//procedo
+    	txtResult.appendText("CLASSIFICA PEGGIORI DI "+squadraScelta+"\n");
+    	List<TeamClassifica> peggiori = this.model.getSquadrePeggiori(squadraScelta);
+    	for(TeamClassifica t: peggiori) {
+    		txtResult.appendText(t+"\n");
+    	}
+    	txtResult.appendText("NUMERO PEGGIORI :"+peggiori.size()+"\n");
+    	
+    	
+    	txtResult.appendText("CLASSIFICA MIGLIORI DI "+squadraScelta+"\n");
+    	List<TeamClassifica> migliori = this.model.getSquadreMigliori(squadraScelta);
+    	for(TeamClassifica t: migliori) {
+    		txtResult.appendText(t+"\n");
+    	}
+    	txtResult.appendText("NUMERO MIGLIORI :"+migliori.size());
     }
 
     @FXML

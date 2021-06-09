@@ -3,6 +3,7 @@ package it.polito.tdp.PremierLeague.model;
 public class Team {
 	Integer teamID;
 	String name;
+	Double puntiTeam=0.0;
 
 	public Team(Integer teamID, String name) {
 		super();
@@ -24,6 +25,14 @@ public class Team {
 	}
 	
 	
+
+	public Double getPuntiTeam() {
+		return puntiTeam;
+	}
+
+	public void setPuntiTeam(Double puntiTeam) {
+		this.puntiTeam = puntiTeam;
+	}
 
 	@Override
 	public String toString() {

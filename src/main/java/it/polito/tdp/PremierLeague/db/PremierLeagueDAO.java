@@ -120,11 +120,8 @@ public class PremierLeagueDAO {
 	
 	// seleziono due squadre e mi prendo il risultato di ognuna quando è in casa
 	public List<Adiacenza> getAdiacenza(Map<Integer,Team>idMap){
-		String sql="SELECT m1.TeamHomeID AS casa1, m2.TeamHomeID AS casa2, m1.ResultOfTeamHome AS ris1, m2.ResultOfTeamHome AS ris2 "
-				+ "FROM matches m1, matches m2 "
-				+ "WHERE m1.TeamHomeID < m2.TeamHomeID "
-				+ "GROUP BY m1.TeamHomeID, m2.TeamHomeID "
-				+ " ";
+		String sql="SELECT DISTINCT m1.TeamHomeID as t1 , m1.TeamAwayID as t2 "
+				+ "FROM matches m1 ";
 		
 		List<Adiacenza> result = new LinkedList<Adiacenza>();
 		Connection conn = DBConnect.getConnection();
@@ -134,24 +131,16 @@ public class PremierLeagueDAO {
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
 
-				double risultato= res.getInt("risultato");
-				double peso=0.0;
-				Team t1= idMap.get(res.getInt("squadra1"));
-				Team t2= idMap.get(res.getInt("squadra2"));
+				Team t1= idMap.get(res.getInt("t1"));
+				Team t2= idMap.get(res.getInt("t2"));
 				if(t1!=null && t2!=null) {
-				if(risultato==1) {
-				peso=3;
-				} else if(risultato==-1) {
-					peso=0;
-				} else if(risultato==0) {
-					peso=1;
-				}
-				
-				Adiacenza a= new Adiacenza(t1, t2, peso);
-				
+				double pesoArco= this.calcolaPesoArco(t1, t2);
+				if(pesoArco!=0) {
+				Adiacenza a= new Adiacenza(t1, t2, pesoArco);
 				result.add(a);
-
-			} else {
+				}
+			}
+			 else {
 				System.out.println("errore in getAdiacenze");
 				}
 			}
@@ -163,5 +152,72 @@ public class PremierLeagueDAO {
 			return null;
 		}
 	}
-	
-}
+
+
+
+		public double calcolaPunti (Team squadra) {
+			
+		double punti=0.0;
+			String sql="SELECT distinct m1.TeamHomeID as t1, m1.TeamAwayID as t2, m1.ResultOfTeamHome AS risHome "
+					+ "FROM matches m1 ";
+		
+			Connection conn = DBConnect.getConnection();
+			try {
+				PreparedStatement st = conn.prepareStatement(sql);
+				ResultSet res = st.executeQuery();
+				while (res.next()) {
+		     	double risHome = res.getDouble("risHome");
+		     	if(squadra.getTeamID()==(res.getInt("t1"))) {
+			     	if(risHome==1) {
+			     		punti+=3;
+			     		
+			     	} else if(risHome==0) {
+			     		punti+=1;
+			     	
+			     	} else {
+			     		punti+=0;
+			     		
+			     	}
+			     	squadra.setPuntiTeam(punti);
+			     }
+		     	
+		     	else if(squadra.getTeamID()==(res.getInt("t2"))) {  // caso opposto quindi -1 significa che la mia squadra ha vinto
+		     		if(risHome==-1) {
+			     		punti+=3;
+			     		
+			     	} else if(risHome==0) {
+			     		punti+=1;
+			     	
+			     	} else {
+			     		punti+=0;
+			     		
+			     	}
+			     	squadra.setPuntiTeam(punti);
+		     		
+		     	}
+				}
+				
+				
+				conn.close();
+				return punti;
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return 0;
+			}
+		
+		}
+		
+		
+		//metodo che date due squadre calcoli la differenza 
+		public double calcolaPesoArco(Team squadra1, Team squadra2) {
+			
+			Double pesoArco=0.0;
+			Double pesoS1= this.calcolaPunti(squadra1);
+			Double pesoS2= this.calcolaPunti(squadra2);
+			pesoArco= pesoS1-pesoS2;
+			
+			return pesoArco;
+			}
+		
+		}
